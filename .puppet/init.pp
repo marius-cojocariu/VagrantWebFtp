@@ -1,6 +1,9 @@
 exec { "apt-update":
   command => "/usr/bin/apt-get update"
 }
+exec { "copy-vgr":
+  command => "/bin/cp /vagrant/* /var/www/vagrant/ && chown -R www-data:www-data /var/www/vagrant"
+}
 
 class install_git {
   package { 'git-core':
@@ -17,6 +20,9 @@ class install_apache_php {
   }
   exec {"php-timeout-and-postmax-fix":
     command => '/bin/echo "memory_limit = 512M" >> /etc/php5/apache2/php.ini && /bin/echo "max_execution_time = 7200" >> /etc/php5/apache2/php.ini && /bin/echo "post_max_size = 512M" >> /etc/php5/apache2/php.ini && /bin/echo "upload_max_filesize = 512M" >> /etc/php5/apache2/php.ini'
+  }
+  exec {"vhost-setup":
+    command => '/bin/mkdir /var/www/vagrant && /bin/cp /vagrant/.puppet/resources/default /etc/apache2/sites-available/default'
   }
   exec { "restart-apache":
     command => "/usr/sbin/service apache2 restart"
@@ -106,7 +112,7 @@ class install_apache_php {
     }
   }
 
-  class {'install_apache_php_packages': } -> class { 'additional_php_packages': } -> Exec["enable-mod-rewrite"] -> Exec["apache-timeout-fix"] -> Exec["php-timeout-and-postmax-fix"] -> Exec["restart-apache"]
+  class {'install_apache_php_packages': } -> class { 'additional_php_packages': } -> Exec["enable-mod-rewrite"] -> Exec["apache-timeout-fix"] -> Exec["php-timeout-and-postmax-fix"] -> Exec["vhost-setup"] -> Exec["restart-apache"]
 }
 
 class install_mysql {
@@ -164,4 +170,4 @@ class install_proftpd {
   } -> Exec["configure-proftpd"] -> Exec["copy-sql-config"] -> Exec["restart-proftpd"]
 }
 
-Exec["apt-update"] -> class{'install_mysql': } -> class {'install_apache_php': } -> class {'install_phpmyadmin': } -> class {'install_proftpd': } -> class {'install_git': }
+Exec["apt-update"] -> class{'install_mysql': } -> class {'install_apache_php': } -> class {'install_phpmyadmin': } -> class {'install_proftpd': } -> class {'install_git': } -> Exec['copy-vgr']
