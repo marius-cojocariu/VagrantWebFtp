@@ -2,7 +2,7 @@ exec { "apt-update":
   command => "/usr/bin/apt-get update"
 }
 exec { "copy-vgr":
-  command => "/bin/cp /vagrant/* /var/www/vagrant/ && chown -R www-data:www-data /var/www/vagrant"
+  command => "/bin/cp -R /vagrant/* /var/www/vagrant/ && chown -R www-data:www-data /var/www/vagrant"
 }
 
 class install_git {
